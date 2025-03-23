@@ -2,7 +2,7 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000; // Use PORT environment variable for Vercel
 
 app.use(cors());
 app.use(express.json());
@@ -79,5 +79,5 @@ app.delete('/vouchers/:id', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server running on port ${port}`);
 });
