@@ -15,8 +15,14 @@ app.use((req, res, next) => {
 });
 
 // Configure Supabase client
-const supabaseUrl = process.env.https://bfholfyfdpsxlgzmssnn.supabase.co;
-const supabaseKey = process.env.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaG9sZnlmZHBzeGxnem1zc25uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI3NTk1NjIsImV4cCI6MjA1ODMzNTU2Mn0.te2m3CImZHE8Dc04weMEx1A2yPSHWIb5QPairbOiXjY; // Your anon key from Supabase dashboard
+const supabaseUrl = process.env.SUPABASE_URL; // e.g., https://bfholfyfdpsxlgzmssnn.supabase.co
+const supabaseKey = process.env.SUPABASE_ANON_KEY; // Your anon key from Supabase dashboard
+console.log('SUPABASE_URL:', supabaseUrl); // Debug: Log the URL
+console.log('SUPABASE_ANON_KEY:', supabaseKey ? 'Set (hidden for security)' : 'Not set'); // Debug: Log if the key is set
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Error: SUPABASE_URL and SUPABASE_ANON_KEY must be set in environment variables');
+  process.exit(1); // Exit if variables are not set
+}
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Test route to verify database connection
