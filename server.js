@@ -1,8 +1,8 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const cors = require('cors');
 const app = express();
-const port = process.env.PORT || 5000; // Use PORT environment variable for Vercel
+const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -14,14 +14,16 @@ app.use((req, res, next) => {
   next();
 });
 
-const db = new sqlite3.Database('./vouchers.db', (err) => {
-  if (err) console.error(err.message);
-  console.log('Connected to SQLite database.');
+// Configure PostgreSQL connection
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }, // Required for Supabase PostgreSQL
 });
 
-db.run(`
+// Create table if it doesn’t exist
+pool.query(`
   CREATE TABLE IF NOT EXISTS vouchers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     voucherNumber TEXT,
     date TEXT,
     name TEXT,
@@ -32,50 +34,60 @@ db.run(`
     month TEXT,
     year TEXT
   )
-`);
+`).then(() => {
+  console.log('Connected to PostgreSQL database and ensured table exists.');
+}).catch((err) => {
+  console.error('Error connecting to PostgreSQL:', err.message);
+});
 
-app.get('/vouchers/:month', (req, res) => {
+app.get('/vouchers/:month', async (req, res) => {
   const month = req.params.month;
   const year = req.query.year;
   console.log('Querying for:', { month, year });
-  db.all('SELECT * FROM vouchers WHERE month = ? AND year = ?', [month, year], (err, rows) => {
-    if (err) return res.status(500).json({ error: err.message });
-    console.log('Found rows:', rows);
-    res.json(rows);
-  });
+  try {
+    const result = await pool.query('SELECT * FROM vouchers WHERE month = $1 AND year = $2', [month, year]);
+    console.log('Found rows:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post('/vouchers', (req, res) => {
+app.post('/vouchers', async (req, res) => {
   const { voucherNumber, date, name, bank, chequeNumber, amount, category, month, year } = req.body;
   console.log('Saving voucher:', { voucherNumber, date, name, bank, chequeNumber, amount, category, month, year });
-  db.run(
-    'INSERT INTO vouchers (voucherNumber, date, name, bank, chequeNumber, amount, category, month, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    [voucherNumber, date, name, bank, chequeNumber, amount, category, month, year],
-    (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true });
-    }
-  );
+  try {
+    await pool.query(
+      'INSERT INTO vouchers (voucherNumber, date, name, bank, chequeNumber, amount, category, month, year) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+      [voucherNumber, date, name, bank, chequeNumber, amount, category, month, year]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.put('/vouchers/:id', (req, res) => {
+app.put('/vouchers/:id', async (req, res) => {
   const { voucherNumber, date, name, bank, chequeNumber, amount, category, month, year } = req.body;
-  db.run(
-    'UPDATE vouchers SET voucherNumber = ?, date = ?, name = ?, bank = ?, chequeNumber = ?, amount = ?, category = ?, month = ?, year = ? WHERE id = ?',
-    [voucherNumber, date, name, bank, chequeNumber, amount, category, month, year, req.params.id],
-    (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true });
-    }
-  );
+  try {
+    await pool.query(
+      'UPDATE vouchers SET voucherNumber = $1, date = $2, name = $3, bank = $4, chequeNumber = $5, amount = $6, category = $7, month = $8, year = $9 WHERE id = $10',
+      [voucherNumber, date, name, bank, chequeNumber, amount, category, month, year, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.delete('/vouchers/:id', (req, res) => {
-  db.run('DELETE FROM vouchers WHERE id = ?', [req.params.id], (err) => {
-    if (err) return res.status(500).json({ error: err.message });
+app.delete('/vouchers/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM vouchers WHERE id = $1', [req.params.id]);
     res.json({ success: true });
     console.log(`Deleted voucher with id: ${req.params.id}`);
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.listen(port, () => {
