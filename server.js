@@ -106,6 +106,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// Root route for informational purposes
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to the KVVK Vouchers Backend API' });
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
