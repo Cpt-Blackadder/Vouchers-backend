@@ -20,6 +20,16 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }, // Required for Supabase PostgreSQL
 });
 
+// Test route to verify database connection
+app.get('/test-db', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ success: true, message: 'Database connection successful' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Create table if it doesn’t exist
 pool.query(`
   CREATE TABLE IF NOT EXISTS vouchers (
@@ -37,7 +47,7 @@ pool.query(`
 `).then(() => {
   console.log('Connected to PostgreSQL database and ensured table exists.');
 }).catch((err) => {
-  console.error('Error connecting to PostgreSQL:', err.message);
+  console.error('Error creating table:', err.message);
 });
 
 app.get('/vouchers/:month', async (req, res) => {
@@ -88,6 +98,12 @@ app.delete('/vouchers/:id', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err.message);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(port, () => {
