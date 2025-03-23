@@ -29,39 +29,12 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 app.get('/test-db', async (req, res) => {
   try {
     console.log('Testing database connection...');
-    const { data, error } = await supabase.from('vouchers').select('1').limit(1);
+    const { data, error } = await supabase.from('vouchers').select('id').limit(1);
     if (error) throw error;
     console.log('Database connection successful:', data);
     res.json({ success: true, message: 'Database connection successful' });
   } catch (err) {
     console.error('Database connection error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Create table if it doesn’t exist (optional, can also create in Supabase dashboard)
-app.get('/init-db', async (req, res) => {
-  try {
-    const { error } = await supabase.rpc('execute_sql', {
-      query: `
-        CREATE TABLE IF NOT EXISTS vouchers (
-          id SERIAL PRIMARY KEY,
-          "voucherNumber" TEXT,
-          "date" TEXT,
-          "name" TEXT,
-          "bank" TEXT,
-          "chequeNumber" TEXT,
-          "amount" REAL,
-          "category" TEXT,
-          "month" TEXT,
-          "year" TEXT
-        )
-      `
-    });
-    if (error) throw error;
-    res.json({ success: true, message: 'Table created or already exists' });
-  } catch (err) {
-    console.error('Error creating table:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
