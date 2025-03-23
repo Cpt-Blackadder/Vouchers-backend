@@ -17,7 +17,12 @@ app.use((req, res, next) => {
 // Configure PostgreSQL connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }, // Required for Supabase PostgreSQL
+  ssl: {
+    rejectUnauthorized: false,
+    ca: undefined,
+    cert: undefined,
+    key: undefined,
+  },
 });
 
 // Test route to verify database connection
