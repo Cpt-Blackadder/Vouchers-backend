@@ -15,22 +15,26 @@ app.use((req, res, next) => {
 });
 
 // Configure PostgreSQL connection
+console.log('DATABASE_URL:', process.env.DATABASE_URL); // Debug: Log the DATABASE_URL (mask sensitive parts if needed)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
+  ssl: process.env.NODE_ENV === 'production' ? {
     rejectUnauthorized: false,
     ca: undefined,
     cert: undefined,
     key: undefined,
-  },
+  } : false,
 });
 
 // Test route to verify database connection
 app.get('/test-db', async (req, res) => {
   try {
-    await pool.query('SELECT 1');
+    console.log('Testing database connection...');
+    const result = await pool.query('SELECT 1');
+    console.log('Database connection successful:', result.rows);
     res.json({ success: true, message: 'Database connection successful' });
   } catch (err) {
+    console.error('Database connection error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -64,6 +68,7 @@ app.get('/vouchers/:month', async (req, res) => {
     console.log('Found rows:', result.rows);
     res.json(result.rows);
   } catch (err) {
+    console.error('Query error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -78,6 +83,7 @@ app.post('/vouchers', async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
+    console.error('Insert error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -91,6 +97,7 @@ app.put('/vouchers/:id', async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
+    console.error('Update error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -101,6 +108,7 @@ app.delete('/vouchers/:id', async (req, res) => {
     res.json({ success: true });
     console.log(`Deleted voucher with id: ${req.params.id}`);
   } catch (err) {
+    console.error('Delete error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
