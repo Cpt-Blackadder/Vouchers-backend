@@ -71,6 +71,22 @@ app.get('/names', async (req, res) => {
   }
 });
 
+// Get unique banks
+app.get('/banks', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('vouchers')
+      .select('bank')
+      .order('bank', { ascending: true });
+    if (error) throw error;
+    const uniqueBanks = [...new Set(data.map(item => item.bank))].filter(Boolean);
+    res.status(200).json(uniqueBanks);
+  } catch (err) {
+    console.error('Error fetching banks:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/vouchers/:month', async (req, res) => {
   const month = req.params.month;
   const year = req.query.year;
