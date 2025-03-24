@@ -39,6 +39,38 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
+// Get unique categories
+app.get('/categories', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('vouchers')
+      .select('category')
+      .order('category', { ascending: true });
+    if (error) throw error;
+    const uniqueCategories = [...new Set(data.map(item => item.category))].filter(Boolean);
+    res.status(200).json(uniqueCategories);
+  } catch (err) {
+    console.error('Error fetching categories:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get unique names
+app.get('/names', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('vouchers')
+      .select('name')
+      .order('name', { ascending: true });
+    if (error) throw error;
+    const uniqueNames = [...new Set(data.map(item => item.name))].filter(Boolean);
+    res.status(200).json(uniqueNames);
+  } catch (err) {
+    console.error('Error fetching names:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/vouchers/:month', async (req, res) => {
   const month = req.params.month;
   const year = req.query.year;
