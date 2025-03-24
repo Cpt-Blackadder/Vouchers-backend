@@ -51,7 +51,7 @@ app.get('/vouchers/:month', async (req, res) => {
       .eq('year', year);
     if (error) throw error;
     console.log('Found rows:', data);
-    res.json(data);
+    res.status(200).json(data);
   } catch (err) {
     console.error('Query error:', err.message);
     res.status(500).json({ error: err.message });
